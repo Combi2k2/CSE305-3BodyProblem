@@ -4,15 +4,14 @@
 #include <math.h>
 
 struct Vector {
-    double data[3];
+    double data[2];
 
-    Vector(double x = 0, double y = 0, double z = 0) {
+    Vector(double x = 0, double y = 0) {
         data[0] = x;
         data[1] = y;
-        data[2] = z;
     }
     inline double norm2() const {
-        return data[0] * data[0] + data[1] * data[1] + data[2] * data[2];
+        return data[0] * data[0] + data[1] * data[1];
     }
     inline double norm() const {
         return sqrt(norm2());
@@ -21,7 +20,6 @@ struct Vector {
         double n = norm();
         data[0] /= n;
         data[1] /= n;
-        data[2] /= n;
     }
     inline double  operator[](int i) const {
         return data[i];
@@ -30,7 +28,7 @@ struct Vector {
         return data[i];
     };
 };
- 
+
 Vector operator + (const Vector &a, const Vector &b);
 Vector operator - (const Vector &a, const Vector &b);
 Vector operator * (const Vector &a, const Vector &b);
@@ -38,6 +36,11 @@ Vector operator * (const double &a, const Vector& b);
 Vector operator * (const Vector &a, const double &b);
 Vector operator / (const Vector &a, const double &b);
 double dot(const Vector &a, const Vector &b);
-Vector cross(const Vector &a, const Vector &b);
+
+void operator += (Vector &a, const Vector &b);
+void operator -= (Vector &a, const Vector &b);
+void operator *= (Vector &a, const Vector &b);
+void operator *= (Vector &a, const double &b);
+void operator /= (Vector &a, const double &b);
 
 #endif

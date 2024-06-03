@@ -21,7 +21,7 @@ void update(Body *objs, size_t N) {
             f = f + dir * size;
         }
         objs[i].position = objs[i].position + DELTAT * objs[i].velocity;
-        objs[i].velocity = objs[i].velocity + DELTAT * f * (1.0 / objs[i].m); 
+        objs[i].velocity = objs[i].velocity + DELTAT * f * (1.0 / objs[i].m);
     }
 }
 
