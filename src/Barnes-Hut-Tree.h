@@ -18,8 +18,8 @@ public:
     num_particles = 0;
     box_center = Vector(0, 0);
     box_size = pow(2, 32);
-    mass_center = Body();
-    first_individual = Body();
+    mass_center = Body(1, 1, 0, 0, 0, 0);
+    first_individual = Body(1, 1, 0, 0, 0, 0);
     for (int i = 0; i < 4; i++)
     {
       quadrants[i] = nullptr;
@@ -30,8 +30,8 @@ public:
   {
     num_particles = 0;
     box_center = _box_center; // Make sure to check that all bodies lies in this boxWidth
-    mass_center = Body();
-    first_individual = Body();
+    mass_center = Body(1, 1, 0, 0, 0, 0);
+    first_individual = Body(1, 1, 0, 0, 0, 0);
     for (int i = 0; i < 4; i++)
     {
       quadrants[i] = nullptr;
@@ -156,6 +156,7 @@ public:
       {
         insert(node->quadrants[first_particle_ind], node->first_individual);
       }
+      // Reallocate the first individual particle to its quadrant
 
       int particle_ind = node->quad_index(particle.center);
       if (node->quadrants[particle_ind] == nullptr)
@@ -168,9 +169,11 @@ public:
       {
         insert(node->quadrants[particle_ind], particle);
       }
+      // Reallocate the new particle to its quadrant
     }
     node->num_particles += 1;
     node->mass_center = node->mass_center + particle;
+    // Update the mass and the position of the mass center of the box
   }
 
   void build(std::vector<Body> &particles, TreeNode *root_node)
@@ -178,6 +181,19 @@ public:
     for (int i = 0; i < particles.size(); i++)
     {
       insert(root_node, particles[i]);
+    }
+  }
+
+  void delete_tree(TreeNode *node)
+  {
+    if (node != nullptr)
+    {
+      for (int quad = 0; quad < 4; quad++)
+      {
+        // Delete 4 quadrants children of the node
+        delete_tree(node->quadrants[quad]);
+      }
+      delete node;
     }
   }
 };
