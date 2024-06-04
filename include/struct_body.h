@@ -10,7 +10,7 @@ struct Body
     Vector center;
     Vector speed;
 
-    explicit Body(double mass, double r, double x, double y, double dx, double dy)
+    explicit Body(double mass = 1, double r = 1, double x = 0, double y = 0, double dx = 0, double dy = 0)
     {
         this->mass = mass;
         this->radius = r;
@@ -34,5 +34,6 @@ struct Body
 Body operator+(const Body &a, const Body &b);
 void operator+=(Body &a, const Body &b);
 void operator*=(Body &a, const double &factor);
+void operator/=(Body &a, const double &factor);
 
 #endif
