@@ -1,6 +1,7 @@
 #include "../include/transition.h"
 #include "../include/constant.h"
 
+#include <math.h>
 #include <cfloat>
 #include <climits>
 #include <thread>
@@ -10,44 +11,42 @@
 #include <unistd.h>
 #include <algorithm>
 
-void computeForceThread(Body *objs, size_t start, size_t end, Vector *f, size_t N) {
+static void computeForceThread(std::vector<Body> &bodies, size_t start, size_t end, std::vector<Vector> &a, size_t N) {
     for (size_t i = start ; i < end ; ++i) {
-        f[i] = Vector(0, 0);
+        a[i] = Vector(0, 0);
 
         for (size_t j = 0 ; j < N ; ++j) {
-            if (i == j) continue;
+            double dx = bodies[j].center[0] - bodies[i].center[0];
+            double dy = bodies[j].center[1] - bodies[i].center[1];
+            double dist_sq = dx * dx + dy * dy + 0.01;
 
-            double size = G * objs[i].mass * objs[j].mass / (objs[i].center - objs[j].center).norm2();
-            Vector dir = objs[j].center - objs[i].center;
+            double acceleration = G * bodies[j].mass / dist_sq;
 
-            dir.normalize();
-
-            f[i] += dir * size;
+            a[i][0] += acceleration * dx / sqrt(dist_sq);
+            a[i][1] += acceleration * dy / sqrt(dist_sq);
         }
     }
 }
 
-void update(Body *objs, size_t N, int nThreads) {
-    Vector *f = new Vector[N];
+void update(std::vector<Body> &bodies, int nThreads) {
+    size_t N = bodies.size();
+
+    std::vector<Vector> acc(N);
+    std::vector<std::thread> t(nThreads);
 
     size_t BLOCK_SIZE = (N + nThreads - 1) / nThreads;
-    size_t start = 0;
-    size_t end = BLOCK_SIZE;
 
-    std::thread t[nThreads - 1];
+    for (size_t i = 0 ; i < nThreads ; ++i) {
+        size_t l = std::min(i * BLOCK_SIZE, N);
+        size_t r = std::min(l + BLOCK_SIZE, N);
 
-    for (size_t i = 0 ; i < nThreads - 1 ; ++i) {
-        t[i] = std::thread(&computeForceThread, objs, start, end, f, N);
-
-        start = end;
-        end = start + BLOCK_SIZE;
+        t[i] = std::thread(&computeForceThread, std::ref(bodies), l, r, std::ref(acc), N);
     }
-    computeForceThread(objs, start, N, f, N);
+    for (size_t i = 0 ; i < nThreads ; ++i)
+        t[i].join();
 
     for (size_t i = 0 ; i < N ; ++i) {
-        objs[i].center += DELTAT * objs[i].speed;
-        objs[i].speed  += DELTAT / objs[i].mass * f[i];
+        bodies[i].speed  += DELTAT * acc[i];
+        bodies[i].center += DELTAT * bodies[i].speed;
     }
-
-    delete f;
 }
