@@ -1,4 +1,5 @@
 #include "../include/utils.h"
+#include <assert.h>
 
 #define MODULUS    2147483647
 #define MULTIPLIER 48271
@@ -28,11 +29,11 @@ double Random()
 
 void initialize_random(std::vector<Body> &bodies, int N) {
     double total_mass = 0;
-    double vx = 0;
-    double vy = 0;
+    double mvx = 0;
+    double mvy = 0;
 
     for (Body &obj : bodies) {
-        obj.mass = 20.0 / N;
+        obj.mass = Random() * 40.0 / N;
         obj.radius = 5;
 
 		obj.center[0] = Random() * 2 - 1;
@@ -41,17 +42,15 @@ void initialize_random(std::vector<Body> &bodies, int N) {
 		obj.speed[0] = Random() * 2 - 1;
 		obj.speed[1] = Random() * 2 - 1;
 
-        vx += obj.speed[0] * obj.mass;
-        vy += obj.speed[1] * obj.mass;
+        mvx += obj.speed[0] * obj.mass;
+        mvy += obj.speed[1] * obj.mass;
 
         total_mass += obj.mass;
     }
-    vx /= total_mass;
-    vy /= total_mass;
-
     for (Body &obj : bodies) {
-        obj.speed[0] -= vx;
-        obj.speed[1] -= vy;
+        obj.radius = obj.mass / total_mass * 100;
+        obj.speed[0] -= mvx / total_mass;
+        obj.speed[1] -= mvy / total_mass;
     }
 }
 void initialize_4galaxies(std::vector<Body> &bodies, int N) {
@@ -61,16 +60,16 @@ void initialize_4galaxies(std::vector<Body> &bodies, int N) {
 
     for (int i = 0 ; i < N ; ++i) {
 		if (i < 4) {
-            bodies[i].mass = Random() + 5;
+            bodies[i].mass = Random() + 20;
             bodies[i].center[0] = dx[i];
             bodies[i].center[1] = dy[i];
-            bodies[i].speed[0] = Random();
-            bodies[i].speed[1] = Random();
+            bodies[i].speed[0] = Random() * 2 - 1;
+            bodies[i].speed[1] = Random() * 2 - 1;
 		} else {
-            int idx = rand() % 4;
+            int idx = std::min(int(Random() * 4), 3);
             bodies[i].mass = Random();
-            bodies[i].center[0] = dx[i] + Random() * 2 - 1;
-            bodies[i].center[1] = dy[i] + Random() * 2 - 1;
+            bodies[i].center[0] = dx[idx] + Random() * 2 - 1;
+            bodies[i].center[1] = dy[idx] + Random() * 2 - 1;
             bodies[i].speed[0] = Random() * 2 - 1;
             bodies[i].speed[1] = Random() * 2 - 1;
 		}
@@ -84,12 +83,25 @@ void initialize_4galaxies(std::vector<Body> &bodies, int N) {
     for (Body &obj : bodies) {
         obj.speed[0] -= mvx;
         obj.speed[1] -= mvy;
-        obj.mass = obj.mass / total_mass * 20.0;
+        obj.radius = obj.mass / total_mass * 100;
+        obj.mass   = obj.mass / total_mass * 20.0;
     }
 }
+void initialize_solarsystem(std::vector<Body> &bodies, int N) {
+    assert(N == 9);
 
+    bodies[0] = Body(1.989e30, 696340e3,        0, 0, 0,       0);  // Sun
+    bodies[1] = Body(3.285e23, 2439.7e3,  57.91e9, 0, 0, 47.36e3);  // Mercury
+    bodies[2] = Body(4.867e24, 6051.8e3, 108.21e9, 0, 0, 35.02e3);  // Venus
+    bodies[3] = Body(5.972e24, 6371.0e3, 149.60e9, 0, 0, 29.78e3);  // Earth
+    bodies[4] = Body(6.417e23, 3389.5e3, 227.92e9, 0, 0, 24.07e3);  // Mars
+    bodies[5] = Body(1.898e27,  69911e3, 778.57e9, 0, 0, 13.07e3);  // Jupiter
+    bodies[6] = Body(5.683e26,  58232e3, 1.434e12, 0, 0,  9.68e3);  // Saturn
+    bodies[7] = Body(8.681e25,  25362e3, 2.871e12, 0, 0,  6.80e3);  // Uranus
+    bodies[8] = Body(1.024e26,  24622e3, 4.495e12, 0, 0,  5.43e3);  // Neptune
+}
 
 bool check_collision(const Body &a, const Body &b) {
     double distance = (a.center - b.center).norm();
-    return distance <= a.radius + b.radius;
+    return distance <= std::max(a.radius, b.radius);
 }
