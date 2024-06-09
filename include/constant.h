@@ -11,6 +11,9 @@
 #define THETA   1.0         // Opening angle, for approximation in BH
 #define NDIM    2           // Dimension of space
 
+#define WINDOW_WIDTH    800
+#define WINDOW_HEIGHT   600
+
 // #define MASS_OF_JUPITER 1.899e27   //  Sample masses for testing
 // #define MASS_OF_EARTH 5.974e24     //  and comparing the effect 
 // #define MASS_OF_MOON 7.348e22      //  of using different values 

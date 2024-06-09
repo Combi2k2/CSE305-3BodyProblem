@@ -6,6 +6,7 @@
 #define DEFAULT    123456789
 
 static long seed = DEFAULT;
+double SCALE = 1.0;
 
 double Random()
 /* ----------------------------------------------------------------
@@ -31,6 +32,7 @@ void initialize_random(std::vector<Body> &bodies, int N) {
     double total_mass = 0;
     double mvx = 0;
     double mvy = 0;
+    SCALE = 200;
 
     for (Body &obj : bodies) {
         obj.mass = Random() * 40.0 / N;
@@ -57,6 +59,7 @@ void initialize_4galaxies(std::vector<Body> &bodies, int N) {
     double total_mass = 0;
     double mvx = 0;
     double mvy = 0;
+    SCALE = 100;
 
     for (int i = 0 ; i < N ; ++i) {
 		if (i < 4) {
@@ -90,15 +93,17 @@ void initialize_4galaxies(std::vector<Body> &bodies, int N) {
 void initialize_solarsystem(std::vector<Body> &bodies, int N) {
     assert(N == 9);
 
-    bodies[0] = Body(1.989e30, 696340e3,        0, 0, 0,       0);  // Sun
-    bodies[1] = Body(3.285e23, 2439.7e3,  57.91e9, 0, 0, 47.36e3);  // Mercury
-    bodies[2] = Body(4.867e24, 6051.8e3, 108.21e9, 0, 0, 35.02e3);  // Venus
-    bodies[3] = Body(5.972e24, 6371.0e3, 149.60e9, 0, 0, 29.78e3);  // Earth
-    bodies[4] = Body(6.417e23, 3389.5e3, 227.92e9, 0, 0, 24.07e3);  // Mars
-    bodies[5] = Body(1.898e27,  69911e3, 778.57e9, 0, 0, 13.07e3);  // Jupiter
-    bodies[6] = Body(5.683e26,  58232e3, 1.434e12, 0, 0,  9.68e3);  // Saturn
-    bodies[7] = Body(8.681e25,  25362e3, 2.871e12, 0, 0,  6.80e3);  // Uranus
-    bodies[8] = Body(1.024e26,  24622e3, 4.495e12, 0, 0,  5.43e3);  // Neptune
+    bodies[0] = Body(1.0,     4.6491e-3,      0, 0, 0,     0);  // Sun
+    bodies[1] = Body(1.66e-7, 1.6315e-5,  0.387, 0, 0, 1.581);  // Mercury
+    bodies[2] = Body(2.45e-6, 4.7850e-5,  0.723, 0, 0, 1.176);  // Venus
+    bodies[3] = Body(3.00e-6, 4.2635e-5,  1.0,   0, 0, 1.0);    // Earth
+    bodies[4] = Body(3.22e-7, 2.2662e-5,  1.524, 0, 0, 0.802);  // Mars
+    bodies[5] = Body(9.55e-4, 0.4672,     5.204, 0, 0, 0.438);  // Jupiter
+    bodies[6] = Body(2.85e-4, 0.3885,     9.583, 0, 0, 0.323);  // Saturn
+    bodies[7] = Body(4.37e-5, 0.1691,    19.229, 0, 0, 0.227);  // Uranus
+    bodies[8] = Body(5.15e-5, 0.1643,    30.07,  0, 0, 0.182);  // Neptune
+
+    SCALE = 30;
 }
 
 bool check_collision(const Body &a, const Body &b) {

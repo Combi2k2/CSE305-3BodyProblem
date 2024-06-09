@@ -6,27 +6,27 @@
 #include <fstream>
 #include <thread>
 #include <string>
+#include <limits>
 #include <Magick++.h>
 #include <SDL2/SDL.h>
 
 static int nBodies;
-static int nFrames;
 static int nThreads;
 
 static ThreadSafeQueue<std::vector<Body>> frameQueue;
 static std::vector<Body> bodies;
 
-const double SCALE = 200;
+extern double SCALE;
 
-void renderSimulation(const std::vector<Body> &bodies, Magick::Image &frame, double scale) {
+void renderSimulation(const std::vector<Body> &bodies, Magick::Image &frame) {
     frame.strokeColor("transparent");
     frame.fillColor("white");
     frame.draw(Magick::DrawableRectangle(0, 0, frame.columns(), frame.rows()));
 
     for (const Body &body : bodies) {
-        double x = scale * body.center[0] + frame.columns() / 2;
-        double y = scale * body.center[1] + frame.rows() / 2;
-        double circle_radius = std::min(std::max(body.radius * scale, 2.0), 5.0);
+        double x = SCALE * body.center[0] + frame.columns() / 2;
+        double y = SCALE * body.center[1] + frame.rows() / 2;
+        double circle_radius = std::min(std::max(body.radius * SCALE, 3.0), 10.0);
         frame.fillColor("black");
         frame.draw(Magick::DrawableCircle(x, y, x + circle_radius, y));
     }
@@ -58,7 +58,6 @@ void arg_parse(const std::string &filename) {
     std::ifstream fin(filename.c_str());
 
     fin >> nBodies;
-    fin >> nFrames;
     fin >> nThreads;
 
     std::string init_method;
@@ -81,15 +80,10 @@ void arg_parse(const std::string &filename) {
 }
 
 void computeThread() {
-    for (int _ = 0 ; _ < nFrames ; ++_) {
+    while (true) {
         update(bodies, nThreads);
         frameQueue.push(bodies);
-
-        for (const Body &body : bodies) {
-            std::cout << body.center[0] << " " << body.center[1] << "\n";
-        }
     }
-    frameQueue.finish();
 }
 
 int main(int argc, char **argv) {
@@ -110,7 +104,8 @@ int main(int argc, char **argv) {
         "N body Simulation",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        400, 400,
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
         SDL_WINDOW_SHOWN
     );
     if (win == nullptr) {
@@ -136,7 +131,7 @@ int main(int argc, char **argv) {
     
     while (true) {
         if (frameQueue.pop(tmp)) {
-            renderSimulation(tmp, frame, SCALE);
+            renderSimulation(tmp, frame);
             renderFrame(renderer, frame);
             SDL_Delay(int(DELTAT * 1000));
         } else if (frameQueue.isFinished()) {
