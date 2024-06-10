@@ -8,7 +8,7 @@
 #define YBOUND  1.0e6       // Height of space
 #define RBOUND  10          // Upper bound on radius
 #define DELTAT  0.01        // Time increament
-#define THETA   1.0         // Opening angle, for approximation in BH
+#define THETA   0.5         // Opening angle, for approximation in BH
 #define NDIM    2           // Dimension of space
 
 #define WINDOW_WIDTH    800

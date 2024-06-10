@@ -1,17 +1,5 @@
 #include "BarnesHut.h"
-#include <iostream>
 #include <stack>
-
-static void computeAcceleration(const Particle &a, const Particle &b, Vector &acc) {
-    double dx = b.pos[0] - a.pos[0];
-    double dy = b.pos[1] - a.pos[1];
-    double dist = sqrt(dx * dx + dy * dy + 0.01);
-
-    double acceleration = G * b.mass / (dist * dist * dist);
-
-    acc[0] += acceleration * dx;
-    acc[1] += acceleration * dy;
-}
 
 TreeNode::TreeNode(double cx, double cy, double size) {
     this->nParticles = 0;
