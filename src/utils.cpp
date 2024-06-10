@@ -35,22 +35,22 @@ void initialize_random(std::vector<Body> &bodies, int N) {
     SCALE = 200;
 
     for (Body &obj : bodies) {
-        obj.mass = Random() * 40.0 / N;
+        obj.center.mass = Random() * 40.0 / N;
         obj.radius = 5;
-
-		obj.center[0] = Random() * 2 - 1;
-        obj.center[1] = Random() * 2 - 1;
+        
+        obj.center.pos[0] = Random() * 2 - 1;
+        obj.center.pos[1] = Random() * 2 - 1;
 
 		obj.speed[0] = Random() * 2 - 1;
 		obj.speed[1] = Random() * 2 - 1;
 
-        mvx += obj.speed[0] * obj.mass;
-        mvy += obj.speed[1] * obj.mass;
+        mvx += obj.speed[0] * obj.center.mass;
+        mvy += obj.speed[1] * obj.center.mass;
 
-        total_mass += obj.mass;
+        total_mass += obj.center.mass;
     }
     for (Body &obj : bodies) {
-        obj.radius = obj.mass / total_mass * 100;
+        obj.radius = obj.center.mass / total_mass * 100;
         obj.speed[0] -= mvx / total_mass;
         obj.speed[1] -= mvy / total_mass;
     }
@@ -63,22 +63,22 @@ void initialize_4galaxies(std::vector<Body> &bodies, int N) {
 
     for (int i = 0 ; i < N ; ++i) {
 		if (i < 4) {
-            bodies[i].mass = Random() + 20;
-            bodies[i].center[0] = dx[i];
-            bodies[i].center[1] = dy[i];
+            bodies[i].center.mass = Random() + 20;
+            bodies[i].center.pos[0] = dx[i];
+            bodies[i].center.pos[1] = dy[i];
             bodies[i].speed[0] = Random() * 2 - 1;
             bodies[i].speed[1] = Random() * 2 - 1;
 		} else {
             int idx = std::min(int(Random() * 4), 3);
-            bodies[i].mass = Random();
-            bodies[i].center[0] = dx[idx] + Random() * 2 - 1;
-            bodies[i].center[1] = dy[idx] + Random() * 2 - 1;
+            bodies[i].center.mass = Random();
+            bodies[i].center.pos[0] = dx[idx] + Random() * 2 - 1;
+            bodies[i].center.pos[1] = dy[idx] + Random() * 2 - 1;
             bodies[i].speed[0] = Random() * 2 - 1;
             bodies[i].speed[1] = Random() * 2 - 1;
 		}
-		total_mass += bodies[i].mass;
-        mvx += bodies[i].mass * bodies[i].speed[0];
-        mvy += bodies[i].mass * bodies[i].speed[1];
+		total_mass += bodies[i].center.mass;
+        mvx += bodies[i].center.mass * bodies[i].speed[0];
+        mvy += bodies[i].center.mass * bodies[i].speed[1];
 	}
     mvx /= total_mass;
     mvy /= total_mass;
@@ -86,8 +86,8 @@ void initialize_4galaxies(std::vector<Body> &bodies, int N) {
     for (Body &obj : bodies) {
         obj.speed[0] -= mvx;
         obj.speed[1] -= mvy;
-        obj.radius = obj.mass / total_mass * 100;
-        obj.mass   = obj.mass / total_mass * 20.0;
+        obj.radius = obj.center.mass / total_mass * 100;
+        obj.center.mass   = obj.center.mass / total_mass * 20.0;
     }
 }
 void initialize_solarsystem(std::vector<Body> &bodies, int N) {
@@ -107,6 +107,6 @@ void initialize_solarsystem(std::vector<Body> &bodies, int N) {
 }
 
 bool check_collision(const Body &a, const Body &b) {
-    double distance = (a.center - b.center).norm();
+    double distance = (a.center.pos - b.center.pos).norm();
     return distance <= std::max(a.radius, b.radius);
 }
