@@ -20,25 +20,15 @@ static void insertThread(const std::vector<Body> &bodies, size_t start, size_t e
 #endif
 
 static void computeThread(std::vector<Body> &bodies, size_t start, size_t end, std::vector<Vector> &a, size_t N) {
-#ifdef BARNES_HUT
-    for (size_t i = start ; i < end ; ++i)
-        Optimizer_BarnesHut::query(bodies[i].center, a[i], THETA);
-#else
     for (size_t i = start ; i < end ; ++i) {
         a[i] = Vector(0, 0);
-
-        for (size_t j = 0 ; j < N ; ++j) {
-            double dx = bodies[j].center.pos[0] - bodies[i].center.pos[0];
-            double dy = bodies[j].center.pos[1] - bodies[i].center.pos[1];
-            double dist = dx * dx + dy * dy + 0.01;
-
-            double acceleration = G * bodies[j].center.mass / (dist * dist * dist);
-
-            a[i][0] += acceleration * dx;
-            a[i][1] += acceleration * dy;
-        }
-    }
+#ifdef BARNES_HUT
+        Optimizer_BarnesHut::query(bodies[i].center, a[i], THETA);
+#else
+        for (size_t j = 0 ; j < N ; ++j)
+            computeAcceleration(bodies[i].center, bodies[j].center, a[i]);
 #endif
+    }
 }
 
 void update(std::vector<Body> &bodies, int nThreads) {
@@ -48,7 +38,7 @@ void update(std::vector<Body> &bodies, int nThreads) {
         nThreads = N;
  
     std::vector<Vector> acc(N);
-    std::vector<std::thread> t(nThreads);
+    std::vector<std::thread> workers(nThreads);
 
     size_t BLOCK_SIZE = (N + nThreads - 1) / nThreads;
 #ifdef BARNES_HUT
@@ -61,26 +51,26 @@ void update(std::vector<Body> &bodies, int nThreads) {
         yMin = std::min(yMin, obj.center.pos[1]);
         yMax = std::max(yMax, obj.center.pos[1]);
     }
-    double box_size = std::max({-xMin, xMax, -yMin, yMax}) * 2;
-    Optimizer_BarnesHut::setRoot(0, 0, box_size);
+    double box_size = std::max(xMax - xMin, yMax - yMin) * 2;
+    Optimizer_BarnesHut::setRoot((xMin + xMax) / 2, (yMin + yMax) / 2, box_size);
     
     for (size_t i = 0 ; i < nThreads ; ++i) {
         size_t l = std::min(i * BLOCK_SIZE, N);
         size_t r = std::min(l + BLOCK_SIZE, N);
 
-        t[i] = std::thread(&insertThread, std::cref(bodies), l, r);
+        workers[i] = std::thread(&insertThread, std::cref(bodies), l, r);
     }
     for (size_t i = 0 ; i < nThreads ; ++i)
-        t[i].join();
+        workers[i].join();
 #endif
     for (size_t i = 0 ; i < nThreads ; ++i) {
         size_t l = std::min(i * BLOCK_SIZE, N);
         size_t r = std::min(l + BLOCK_SIZE, N);
 
-        t[i] = std::thread(&computeThread, std::ref(bodies), l, r, std::ref(acc), N);
+        workers[i] = std::thread(&computeThread, std::ref(bodies), l, r, std::ref(acc), N);
     }
     for (size_t i = 0 ; i < nThreads ; ++i)
-        t[i].join();
+        workers[i].join();
 
     for (size_t i = 0 ; i < N ; ++i) {
         bodies[i].speed      += DELTAT * acc[i];
