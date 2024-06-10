@@ -17,6 +17,7 @@ static ThreadSafeQueue<std::vector<Body>> frameQueue;
 static std::vector<Body> bodies;
 
 extern double SCALE;
+static bool FINISHED = false;
 
 void renderSimulation(const std::vector<Body> &bodies, Magick::Image &frame) {
     frame.strokeColor("transparent");
@@ -24,8 +25,8 @@ void renderSimulation(const std::vector<Body> &bodies, Magick::Image &frame) {
     frame.draw(Magick::DrawableRectangle(0, 0, frame.columns(), frame.rows()));
 
     for (const Body &body : bodies) {
-        double x = SCALE * body.center[0] + frame.columns() / 2;
-        double y = SCALE * body.center[1] + frame.rows() / 2;
+        double x = SCALE * body.center.pos[0] + frame.columns() / 2;
+        double y = SCALE * body.center.pos[1] + frame.rows() / 2;
         double circle_radius = std::min(std::max(body.radius * SCALE, 3.0), 10.0);
         frame.fillColor("black");
         frame.draw(Magick::DrawableCircle(x, y, x + circle_radius, y));
@@ -71,16 +72,19 @@ void arg_parse(const std::string &filename) {
     if (init_method == "SOLARSYSTEM")   initialize_solarsystem(bodies, nBodies);
     if (init_method == "MANUAL") {
         for (int i = 0 ; i < nBodies ; ++i) {
-            fin >> bodies[i].mass;
+            fin >> bodies[i].center.mass;
             fin >> bodies[i].radius;
-            fin >> bodies[i].center[0] >> bodies[i].center[1];
-            fin >> bodies[i].speed[0]  >> bodies[i].speed[1];
+            fin >> bodies[i].center.pos[0];
+            fin >> bodies[i].center.pos[1];
+            fin >> bodies[i].speed[0] >> bodies[i].speed[1];
         }
+        SCALE = 100;
+        std::cerr << "WTF???\n";
     }
 }
 
 void computeThread() {
-    while (true) {
+    while (!FINISHED) {
         update(bodies, nThreads);
         frameQueue.push(bodies);
     }
@@ -123,7 +127,7 @@ int main(int argc, char **argv) {
     }
 
     Magick::InitializeMagick(nullptr); // <--- added this line
-    Magick::Image frame(Magick::Geometry(400, 400), Magick::Color("white"));
+    Magick::Image frame(Magick::Geometry(WINDOW_WIDTH, WINDOW_HEIGHT), Magick::Color("white"));
     frame.strokeColor("black");
     frame.fillColor("none");
 
@@ -140,19 +144,17 @@ int main(int argc, char **argv) {
         // Handle SDL events to prevent the window from freezing
         SDL_Event e;
         while (SDL_PollEvent(&e))
-            if (e.type == SDL_QUIT) {
-                SDL_DestroyRenderer(renderer);
-                SDL_DestroyWindow(win);
-                SDL_Quit();
-                return 0;
-            }
+            if (e.type == SDL_QUIT)
+                goto end;
     }
+end:
+    FINISHED = true;
+    A.join();
+    
     // Clean up and quit SDL
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(win);
     SDL_Quit();
-
-    A.join();
 
     return 0;
 }

@@ -1,22 +1,18 @@
 #include "BarnesHut.h"
-#include <iostream>
 #include <stack>
 
-static void computeAcceleration(const Particle &a, const Particle &b, Vector &acc) {
-    double dx = b.pos[0] - a.pos[0];
-    double dy = b.pos[1] - a.pos[1];
-    double dist = sqrt(dx * dx + dy * dy + 0.01);
-
-    double acceleration = G * b.mass / (dist * dist * dist);
-
-    acc[0] += acceleration * dx;
-    acc[1] += acceleration * dy;
-}
-
-TreeNode::TreeNode(const Vector &box_center, const double &box_size) {
+TreeNode::TreeNode(double cx, double cy, double size) {
     this->nParticles = 0;
-    this->box_center = box_center;
-    this->box_size   = box_size;
+    this->box_center = Vector(cx, cy);
+    this->box_size   = size;
+    this->COM = Particle();
+    children[0] = children[1] = nullptr;
+    children[2] = children[3] = nullptr;
+}
+TreeNode::TreeNode(const Vector &center, double size) {
+    this->nParticles = 0;
+    this->box_center = center;
+    this->box_size   = size;
     this->COM = Particle();
     children[0] = children[1] = nullptr;
     children[2] = children[3] = nullptr;
@@ -44,10 +40,17 @@ int TreeNode::quad_index(const Vector &P) const {
     return 3;
 }
 
+static TreeNode *root;
+
+void Optimizer_BarnesHut::setRoot(double x, double y, double size) {
+    root = new TreeNode(x, y, size);
+}
 void Optimizer_BarnesHut::insert(const Particle &p) {
     TreeNode *node = root;
 
     while (true) {
+        std::lock_guard<std::mutex> lock(node->lock);
+
         if (node->nParticles == 0) {
             node->nParticles = 1;
             node->COM = p;
@@ -95,49 +98,5 @@ void Optimizer_BarnesHut::query(const Particle &p, Vector &acc, const double &th
             if (node->children[2])  st.push(node->children[2]);
             if (node->children[3])  st.push(node->children[3]);
         }
-    }
-}
-void Optimizer_BarnesHut::build(const std::vector<Particle> &particles) {
-    double xMin = particles[0].pos[0], xMax = particles[0].pos[0];
-    double yMin = particles[0].pos[1], yMax = particles[0].pos[1];
-
-    for (const Particle &p : particles) {
-        xMin = std::min(xMin, p.pos[0]);
-        xMax = std::max(xMax, p.pos[0]);
-        yMin = std::min(yMin, p.pos[1]);
-        yMax = std::max(yMax, p.pos[1]);
-    }
-    double box_size = std::max({-xMin, xMax, -yMin, yMax}) * 2;
-    root = new TreeNode(Vector(0, 0), box_size);
-
-    for (const Particle &p : particles)
-        insert(p);
-}
-
-int main() {
-    int nPoints = 100;
-    int nFrames = 500;
-
-    std::vector<Body> bodies(nPoints);
-    initialize_random(bodies, nPoints);
-
-    for (int t = 0 ; t < nFrames ; ++t) {
-        std::vector<Particle> vec;
-        std::vector<Vector> acc(nPoints, Vector());
-
-        for (const Body &b : bodies)
-            vec.push_back(Particle(b.center, b.mass));
-        
-        Optimizer_BarnesHut optim;
-        optim.build(vec);
-
-        for (int i = 0 ; i < nPoints ; ++i) {
-            optim.query(vec[i], acc[i]);
-
-            bodies[i].speed  += DELTAT * acc[i];
-            bodies[i].center += DELTAT * bodies[i].speed;
-        }
-        for (int i = 0 ; i < nPoints ; ++i)
-            std::cout << bodies[i].center[0] << " " << bodies[i].center[1] << "\n";
     }
 }
