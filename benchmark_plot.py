@@ -35,7 +35,7 @@ def time_versus_thread(in_file_path, out_file_path, label):
     plt.savefig(out_file_path)
 
 in_file_list = ['time_brute_force.txt', 'time_bht_default.txt', 'time_bht_theta_1.txt', 'time_bht_theta_2.txt']
-out_file_list = ['bruteforce_time_vs_thread.png', 'bht_default_time_vs_thread.png', 'bht_1_time_vs_thread.png','bht_2_time_vs_thread.png']
+out_file_list = ['benchmark_plot/bruteforce_time_vs_thread.png', 'benchmark_plot/bht_default_time_vs_thread.png', 'benchmark_plot/bht_1_time_vs_thread.png','benchmark_plot/bht_2_time_vs_thread.png']
 label_list = ['without barnes-hut tree', 'with barnes-hut tree and theta = 0.5', 'with barnes-hut tree and theta = 1', 'with barnes-hut tree and theta = 2']
 
 
